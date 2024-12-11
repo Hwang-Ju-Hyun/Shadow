@@ -285,10 +285,10 @@ void Level::Run()
 
 		//For each object in the level
 		for (auto o : allObjects)
-			Render(o);
+			Render(o,true);
 
 		for (auto light : MyAllLights)	
-			Render(light->m);
+			Render(light->m,true);
 
 		glUseProgram(0);
 
