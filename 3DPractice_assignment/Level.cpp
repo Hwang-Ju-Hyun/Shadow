@@ -14,6 +14,7 @@
 #include "stb_image.h"
 #include <fstream>
 #include <sstream>
+#include "ShadowMap.h"
 
 
 Level* Level::ptr = nullptr;
@@ -97,14 +98,16 @@ int Level::Initialize()
 		MyViewPort.height = 500;
 	}
 	
-	//shadow map
-	//int shadow_map_w;
-	//int shadow_map_h;	
-	//glfwGetWindowSize(window, &shadow_map_w, &shadow_map_h);
-	//shadow_map = new ShadowMap(shadow_map_w, shadow_map_h);
-	
-	
 	//ShadowMap
+	int shadow_map_w;
+	int shadow_map_h;	
+	glfwGetWindowSize(window, &shadow_map_w, &shadow_map_h);
+	shadow_map = new ShadowMap(shadow_map_w, shadow_map_h);
+	shadow_map->Bind();
+	shadow_map->UnBind();
+		
+
+
 
 	//depth만 보여주는 텍스쳐 생성	
 
@@ -112,14 +115,16 @@ int Level::Initialize()
 	//Shader program
 	ReloadShaderProgram();
 	LoadViewPortShader();
-
+	LoadShadowShader();
 	//LoadShadowShader();	
 	glEnable(GL_CULL_FACE);
 
-	//glFrontFace(GL_CW);
+	//glFrontFace(GL_CW);	
+
 
 	glEnable(GL_DEPTH_TEST);
-//	glDepthFunc(GL_GREATER);
+	//glDepthFunc(GL_GREATER);
+	//glClearDepth(0);
 	return 0;
 }
 
@@ -214,6 +219,7 @@ void Level::mainDraw()
 
 	//The image is mirrored on X
 	cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane, cam.farPlane);
+	
 
 	//For each object in the level
 	for (auto o : allObjects)
@@ -228,8 +234,8 @@ void Level::mainDraw()
 void Level::SmallViewPortDraw()
 {	
 	//use shader program		
-	glUseProgram(viewport_shader->handle);	
-	glBindTextureUnit(0, smallview_textureID);
+	glUseProgram(viewport_shader->handle);		
+	glBindTextureUnit(0, shadow_map->m_iShadowMapTextureID);
 	viewport_shader->setUniform("viewport_texture", 0);
 	glBindVertexArray(model->VAO);
 	glDrawArrays(GL_TRIANGLES, 0,6);
@@ -266,44 +272,81 @@ void Level::Run()
 	// Main loop
 	while (!glfwWindowShouldClose(window)) 
 	{
-		
+
+		float TCurrentFrame = 0;
+
+		std::chrono::time_point<std::chrono::steady_clock> time = std::chrono::steady_clock::now();
+
+		//Update objects pos
+		for (auto obj : allObjects)
+			obj->ModelUpdate(TLastFrame);
+
+
+		std::vector<CS300Parser::Light> all_lights = parser.lights;
+		LightUpdate(TLastFrame);
+
+
+
 		//////////////////////////////////////
 		// pass 1 - rendering to screen///////
-		//////////////////////////////////////
-		 
-				
+		//////////////////////////////////////		
+		shadow_map->Bind();		
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		glUseProgram(shadowmap_shader->handle);
+		CS300Parser::Light li = parser.lights[0];
+		glm::vec3 dir = glm::normalize(li.dir);
+		dir = -dir;
+		glm::vec3 lightUp = { 0,1,0 };
+		glm::vec3 r = glm::normalize(glm::cross(lightUp, dir));
+		glm::mat4 V = glm::mat4(1);
+		glm::vec3 up = glm::normalize(glm::cross(dir, r));
+
+		V[0][0] = r.x;
+		V[1][0] = r.y;
+		V[2][0] = r.z;
+		V[0][1] = up.x;
+		V[1][1] = up.y;
+		V[2][1] = up.z;
+		V[0][2] = dir.x;
+		V[1][2] = dir.y;
+		V[2][2] = dir.z;
+		V[3][0] = -dot(r, li.pos);
+		V[3][1] = -dot(up, li.pos);
+		V[3][2] = -dot(dir, li.pos);
+
+		//cam.ViewMat = glm::lookAt(cam.camPos, cam.camTarget, up);
+		cam.ViewMat = V;
+
+		//The image is mirrored on X
+		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane, cam.farPlane);
+
+
+
+		//For each object in the level
+		for (auto o : allObjects)
+			Render(o);
+
+		shadow_map->UnBind();
+		glUseProgram(0);
+		
 		
 		//////////////////////////////////////
 		// pass 2 - rendering to screen///////
-		//////////////////////////////////////
-		float TCurrentFrame = 0;
+		//////////////////////////////////////	
 		
-		std::chrono::time_point<std::chrono::steady_clock> time = std::chrono::steady_clock::now();
 		// Render graphics here
-		 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			
-
-		 /*if (b_normal_avg)
-		 {
-			 calculate_normal_avg();
-		 }*/
-
-
-		 //Update objects pos
-		 for (auto obj : allObjects)
-			 obj->ModelUpdate(TLastFrame);		 
-
+		 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);					 		 	 
 		 
-		 std::vector<CS300Parser::Light> all_lights = parser.lights;
-		 LightUpdate(TLastFrame);		 
-
 		 glViewport(0, 0, W_WIDTH, W_HEIGHT);
-
 		 mainDraw();
 
-		// shader map display viewport
-		 glViewport(0,0, 500, 500);
+
+		 glViewport(0, 0, 500, 500);
 		 SmallViewPortDraw();
+
+
+				
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -449,8 +492,6 @@ void Level::DeletePtr()
 
 	ptr = nullptr;
 }
-
-
 
 void Level::LoadShadowShader()
 {

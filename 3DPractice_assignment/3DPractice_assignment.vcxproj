@@ -37,6 +37,7 @@
     <ClInclude Include="Level.h" />
     <ClInclude Include="models.h" />
     <ClInclude Include="program.h" />
+    <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="SmallViewPortShader.h" />
   </ItemGroup>
   <ItemGroup>
