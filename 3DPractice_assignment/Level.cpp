@@ -321,8 +321,6 @@ void Level::Run()
 		//The image is mirrored on X
 		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane, cam.farPlane);
 
-
-
 		//For each object in the level
 		for (auto o : allObjects)
 			Render(o);
@@ -377,12 +375,17 @@ void Level::Render(Model* obj, bool IsShaderMap)
 	//Send view matrix to the shader
 	shader->setUniform("model", cam.ProjMat * cam.ViewMat * m2w);	
 
-	glBindTextureUnit(0, obj->textureID);
+	if (IsShaderMap)
+		glBindTextureUnit(shadow_map->m_iShadowMapTextureUnit, shadow_map->m_iShadowMapTextureID);
+	else
+		glBindTextureUnit(0, obj->textureID);
 
-	glBindTextureUnit(4, obj->m_iNormalID);		
+	glBindTextureUnit(4, obj->m_iNormalID);
+
+	GLuint unit = IsShaderMap ? shadow_map->m_iShadowMapTextureUnit : 0;		
 	
 	
-	shader->setUniform("myTextureSampler",0);
+	shader->setUniform("myTextureSampler", unit);
 	shader->setUniform("uNormalMap", 4);
 
 	shader->setUniform("hasTexture", b_tex);
