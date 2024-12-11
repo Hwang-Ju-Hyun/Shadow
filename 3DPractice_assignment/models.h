@@ -2,6 +2,9 @@
 
 #include "CS300Parser.h"
 #include "stb_image.h"
+
+class ShadowMap;
+
 struct Model
 {
 	CS300Parser::Transform transf;
@@ -69,7 +72,7 @@ public:
 struct Light
 {
 	Model* m;
-
+	
 	Light(CS300Parser::Light transf);
 	~Light();
 };

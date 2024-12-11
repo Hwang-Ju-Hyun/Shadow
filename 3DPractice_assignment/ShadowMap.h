@@ -1,4 +1,6 @@
 #pragma once
+#include "GL/glew.h"
+
 class ShadowMap
 {
 public:
@@ -9,8 +11,10 @@ public:
 	unsigned int m_iShadowMapTextureID;
 	unsigned int m_iShadowMapWidth;
 	unsigned int m_iShadowMapHeight;
+	GLuint m_iShadowMapTextureUnit;
 public:
 	void Bind();
 	void UnBind();
+	void Read();
 };
 

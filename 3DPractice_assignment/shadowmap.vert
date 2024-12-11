@@ -7,5 +7,5 @@ uniform mat4 modeltoworld;
 
 void main()
 {
-	gl_Position=
+	gl_Position= model * vPosition;
 }

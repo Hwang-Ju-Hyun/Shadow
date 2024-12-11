@@ -42,6 +42,7 @@
   <ItemGroup>
     <None Include="data\shaders\frag.frag" />
     <None Include="data\shaders\vert.vert" />
+    <None Include="shadowmap.frag" />
     <None Include="shadowmap.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -79,5 +79,8 @@
     <None Include="shadowmap.vert">
       <Filter>shader</Filter>
     </None>
+    <None Include="shadowmap.frag">
+      <Filter>shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

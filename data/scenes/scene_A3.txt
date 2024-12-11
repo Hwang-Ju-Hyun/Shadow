@@ -10,62 +10,8 @@ camTarget 0 0 50
 camUp 0 1 0
     
 #scene data
-object floor
-translate 0 -50 50
-rotation -90 0 0
-scale 100 100 100
-shininess 20
-mesh PLANE
-normalMap data/textures/brick_normal_map.png
-
-object leftWall
-translate -50 0 50
-rotation 0 90 0
-scale 100 100 100
-shininess 20
-mesh PLANE
-normalMap data/textures/brick_normal_map.png
-
-object rightWall
-translate 50 0 50
-rotation 0 -90 0
-scale 100 100 100
-shininess 20
-mesh PLANE
-normalMap data/textures/brick_normal_map.png
-
-object frontWall
-translate 0 0 0
-rotation 0 0 0
-scale 100 100 100
-shininess 20
-mesh PLANE
-normalMap data/textures/brick_normal_map.png
-
-object backWall
-translate 0 0 100
-rotation 0 180 0
-scale 100 100 100
-shininess 20
-mesh PLANE
-normalMap data/textures/brick_normal_map.png
-
-object ceil
-translate 0 50 50
-rotation 90 0 0
-scale 100 100 100
-shininess 20
-mesh PLANE
-normalMap data/textures/brick_normal_map.png
-
 object cube1
 translate 30 -45 80
-rotation 0 0 0
-scale 10 10 10
-mesh CUBE
-
-object cube2
-translate -30 -45 80
 rotation 0 0 0
 scale 10 10 10
 mesh CUBE
@@ -82,4 +28,5 @@ sinusoidal 0 0.5 30
 ambient 0.1
 bias 0.00001
 pcf 3
+mesh CUBE
 

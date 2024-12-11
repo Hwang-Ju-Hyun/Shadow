@@ -51,6 +51,8 @@ in vec3 temp;
 
 void main()
 {   	 					
+	FragColor=texture(myTextureSampler,UV);
+	return;
 	vec3 Phong=vec3(0.0f,0.0f,0.0f);	
 	//tangent space
 	vec3 normalMap_norm = normalize(2.0*texture(uNormalMap,fragTexCoord).xyz-1.0);
