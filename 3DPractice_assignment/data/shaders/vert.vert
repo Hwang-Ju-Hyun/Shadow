@@ -19,6 +19,7 @@ out vec3 temp;
 void main()
 {
     gl_Position = model * vPosition;
+
     fragWorldPos = (modeltoworld * vPosition).xyz; // World Space 위치
     fragNormal = normalize((modeltoworld * vec4(vNormals, 0.0)).xyz); // World Space 법선
     fragTexCoord = vTextCoords;

@@ -14,7 +14,6 @@ uniform vec3 mp_diffuse;
 uniform vec3 mp_specular;
 uniform float mp_shininess;
 
-
 struct Light
 {
     int  type;
@@ -50,7 +49,7 @@ uniform mat4 modeltoworld;
 in vec3 temp;
 
 void main()
-{   	 					
+{
 	vec3 Phong=vec3(0.0f,0.0f,0.0f);	
 	//tangent space
 	vec3 normalMap_norm = normalize(2.0*texture(uNormalMap,fragTexCoord).xyz-1.0);
