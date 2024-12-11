@@ -51,8 +51,6 @@ in vec3 temp;
 
 void main()
 {   	 					
-	FragColor=texture(myTextureSampler,UV);
-	return;
 	vec3 Phong=vec3(0.0f,0.0f,0.0f);	
 	//tangent space
 	vec3 normalMap_norm = normalize(2.0*texture(uNormalMap,fragTexCoord).xyz-1.0);
@@ -61,7 +59,7 @@ void main()
 	normalMap_norm = tbnMat * normalMap_norm;
 
 	//model space->world space
-	normalMap_norm = normalize(modeltoworld * vec4(normalMap_norm,0.f)).xyz;
+	normalMap_norm =normalize(fragNormal);// normalize(modeltoworld * vec4(normalMap_norm,0.f)).xyz;
 
 	for(int i=0;i<uLightNum;i++)
 	{
@@ -107,14 +105,12 @@ void main()
 
 			SpotLightEffect=clamp(SpotLightEffect,0,1);
 			
-			Phong += att*(SpotLightEffect*(Diffuse + Specular));						
+			Phong += att*(SpotLightEffect*(Diffuse + Specular));			
 		}
 		else if(uLight[i].type==2)// DIR
 		{
 			att=1.f;
 			Phong += att*(Diffuse + Specular);		
-			FragColor=texture(uNormalMap,UV);
-			return;
 		}
 		else //POINT
 		{

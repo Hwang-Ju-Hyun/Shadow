@@ -115,7 +115,7 @@ int Level::Initialize()
 	//glFrontFace(GL_CW);
 
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_GREATER);
+//	glDepthFunc(GL_GREATER);
 	return 0;
 }
 
@@ -177,58 +177,20 @@ void Level::calculate_normal_avg(Model* _obj)
 
 void Level::ShadowMapDraw()
 {
-	glViewport(MyViewPort.x, MyViewPort.y, MyViewPort.width, MyViewPort.height);
+	//glViewport(MyViewPort.x, MyViewPort.y, MyViewPort.width, MyViewPort.height);
 }
 
 
 void Level::Run()
 {
 	glClearColor(0, 0, 0, 0);
-	glClearDepth(0);
+
 	float TLastFrame = 0;
 
 	// Main loop
 	while (!glfwWindowShouldClose(window)) 
 	{
-		//////////////////////////////////////
-		/// pass 1 - shadow map generation ///
-		//////////////////////////////////////
-		shadow_map->Bind();
-
-		glClear(GL_DEPTH_BUFFER_BIT);
-
-		{			
-			auto li = parser.lights[0];			
-			glm::vec3 dir = glm::normalize(li.dir);
-			dir = -dir;
-			glm::vec3 r = glm::normalize(glm::cross(glm::vec3{0,1,0}, dir));
-			glm::mat4 V = glm::mat4(1);
-			glm::vec3 up = glm::normalize(glm::cross(dir, r));
-
-			V[0][0] = r.x;
-			V[1][0] = r.y;
-			V[2][0] = r.z;
-			V[0][1] = up.x;
-			V[1][1] = up.y;
-			V[2][1] = up.z;
-			V[0][2] = dir.x;
-			V[1][2] = dir.y;
-			V[2][2] = dir.z;
-			V[3][0] = -dot(r, li.pos);
-			V[3][1] = -dot(up, li.pos);
-			V[3][2] = -dot(dir, li.pos);
-
-			//cam.ViewMat = glm::lookAt(cam.camPos, cam.camTarget, up);
-			cam.ViewMat = V;
-
-			//The image is mirrored on X			
-			cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane, cam.farPlane);
-		}
 		
-		for (auto o : allObjects)
-			Render(o);
-
-		shadow_map->UnBind();
 
 		//////////////////////////////////////
 		// pass 2 - rendering to screen///////
@@ -325,16 +287,12 @@ void Level::Render(Model* obj, bool IsShaderMap)
 	//Send view matrix to the shader
 	shader->setUniform("model", cam.ProjMat * cam.ViewMat * m2w);	
 
-	if (IsShaderMap)
-		glBindTextureUnit(shadow_map->m_iShadowMapTextureUnit, shadow_map->m_iShadowMapTextureID);
-	else
-		glBindTextureUnit(0, obj->textureID);
+	glBindTextureUnit(0, obj->textureID);
 
 	glBindTextureUnit(4, obj->m_iNormalID);		
-
-	GLuint unit = IsShaderMap ? shadow_map->m_iShadowMapTextureUnit : 0;
 	
-	shader->setUniform("myTextureSampler", unit);
+	
+	shader->setUniform("myTextureSampler",0);
 	shader->setUniform("uNormalMap", 4);
 
 	shader->setUniform("hasTexture", b_tex);
@@ -384,15 +342,8 @@ void Level::Render(Model* obj, bool IsShaderMap)
 
 
 	//draw
-	if ( obj->transf.name == "cylinder" || obj->transf.name == "sphere")
-	{
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->EBO);
-		glDrawElements(GL_TRIANGLES, obj->indicies.size(), GL_UNSIGNED_INT, 0);
-	}
-	else
-	{
-		glDrawArrays(GL_TRIANGLES, 0, obj->points.size());
-	}
+	glDrawArrays(GL_TRIANGLES, 0, obj->points.size());
+
 	glBindBuffer(GL_ARRAY_BUFFER,0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
