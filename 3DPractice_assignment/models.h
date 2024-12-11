@@ -30,8 +30,9 @@ struct Model
 	unsigned int normal_VAO;
 	unsigned int EBO=-1;
 
-	void LoadModel();
+	void LoadModel(std::string name);
 	unsigned int textureID;
+	Model(std::string name);
 	Model(const CS300Parser::Transform& _transform);
 	~Model();
 	
@@ -65,8 +66,7 @@ public:
 	unsigned int m_iNormalID=0;
 	float t = 0;
 
-
-
+	unsigned int GetVAOByPlane();
 };
 
 struct Light

@@ -37,13 +37,15 @@
     <ClInclude Include="Level.h" />
     <ClInclude Include="models.h" />
     <ClInclude Include="program.h" />
-    <ClInclude Include="ShadowMap.h" />
+    <ClInclude Include="SmallViewPortShader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="data\shaders\frag.frag" />
     <None Include="data\shaders\vert.vert" />
     <None Include="shadowmap.frag" />
     <None Include="shadowmap.vert" />
+    <None Include="SmallViewPortShader.frag" />
+    <None Include="SmallViewPortShader.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

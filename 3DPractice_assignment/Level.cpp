@@ -12,7 +12,9 @@
 #include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#include "ShadowMap.h"
+#include <fstream>
+#include <sstream>
+
 
 Level* Level::ptr = nullptr;
 
@@ -44,6 +46,9 @@ int Level::Initialize()
 
 	//Set callbacks
 	glfwSetKeyCallback(window, Controls::keyCallback);
+
+
+	model = new Model("PLANE");
 
 	//Load Scene	
 	parser.LoadDataFromFile("data/scenes/scene_A3.txt");
@@ -92,23 +97,22 @@ int Level::Initialize()
 		MyViewPort.height = 500;
 	}
 	
-
 	//shadow map
-	int shadow_map_w;
-	int shadow_map_h;	
-	glfwGetWindowSize(window, &shadow_map_w, &shadow_map_h);
-	shadow_map = new ShadowMap(shadow_map_w, shadow_map_h);
+	//int shadow_map_w;
+	//int shadow_map_h;	
+	//glfwGetWindowSize(window, &shadow_map_w, &shadow_map_h);
+	//shadow_map = new ShadowMap(shadow_map_w, shadow_map_h);
 	
 	
 	//ShadowMap
-	shadow_map->Bind();
-	shadow_map->UnBind();
 
 	//depth만 보여주는 텍스쳐 생성	
 
 
 	//Shader program
 	ReloadShaderProgram();
+	LoadViewPortShader();
+
 	//LoadShadowShader();	
 	glEnable(GL_CULL_FACE);
 
@@ -180,6 +184,78 @@ void Level::ShadowMapDraw()
 	//glViewport(MyViewPort.x, MyViewPort.y, MyViewPort.width, MyViewPort.height);
 }
 
+void Level::mainDraw()
+{
+	//use shader program		
+	glUseProgram(shader->handle);
+
+	//Calculate Camera Matrix
+	glm::vec3 dir = glm::normalize(cam.camTarget - cam.camPos);
+	dir = -dir;
+	glm::vec3 r = glm::normalize(glm::cross(cam.camUp, dir));
+	glm::mat4 V = glm::mat4(1);
+	glm::vec3 up = glm::normalize(glm::cross(dir, r));
+
+	V[0][0] = r.x;
+	V[1][0] = r.y;
+	V[2][0] = r.z;
+	V[0][1] = up.x;
+	V[1][1] = up.y;
+	V[2][1] = up.z;
+	V[0][2] = dir.x;
+	V[1][2] = dir.y;
+	V[2][2] = dir.z;
+	V[3][0] = -dot(r, cam.camPos);
+	V[3][1] = -dot(up, cam.camPos);
+	V[3][2] = -dot(dir, cam.camPos);
+
+	//cam.ViewMat = glm::lookAt(cam.camPos, cam.camTarget, up);
+	cam.ViewMat = V;
+
+	//The image is mirrored on X
+	cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane, cam.farPlane);
+
+	//For each object in the level
+	for (auto o : allObjects)
+		Render(o);
+
+	for (auto light : MyAllLights)
+		Render(light->m);
+
+	glUseProgram(0);
+}
+
+void Level::SmallViewPortDraw()
+{	
+	//use shader program		
+	glUseProgram(viewport_shader->handle);	
+	glBindTextureUnit(0, smallview_textureID);
+	viewport_shader->setUniform("viewport_texture", 0);
+	glBindVertexArray(model->VAO);
+	glDrawArrays(GL_TRIANGLES, 0,6);
+	glUseProgram(0);
+}
+
+void Level::LoadViewPortShader()
+{
+	std::stringstream v;
+	std::stringstream f;
+
+	std::ifstream file("SmallViewPortShader.vert");
+
+	if (file.is_open())
+	{
+		v << file.rdbuf();
+	}
+
+	file.close();
+	file.open("SmallViewPortShader.frag");
+	f << file.rdbuf();
+	file.close();
+
+	viewport_shader = new cg::Program(v.str().c_str(), f.str().c_str());
+}
+
 
 void Level::Run()
 {
@@ -191,7 +267,12 @@ void Level::Run()
 	while (!glfwWindowShouldClose(window)) 
 	{
 		
-
+		//////////////////////////////////////
+		// pass 1 - rendering to screen///////
+		//////////////////////////////////////
+		 
+				
+		
 		//////////////////////////////////////
 		// pass 2 - rendering to screen///////
 		//////////////////////////////////////
@@ -216,47 +297,13 @@ void Level::Run()
 		 std::vector<CS300Parser::Light> all_lights = parser.lights;
 		 LightUpdate(TLastFrame);		 
 
-		//use shader program		
-		glUseProgram(shader->handle);
+		 glViewport(0, 0, W_WIDTH, W_HEIGHT);
 
-		//Calculate Camera Matrix
-		glm::vec3 dir = glm::normalize(cam.camTarget - cam.camPos);
-		dir = -dir;
-		glm::vec3 r = glm::normalize(glm::cross(cam.camUp, dir));
-		glm::mat4 V = glm::mat4(1);
-		glm::vec3 up = glm::normalize(glm::cross(dir, r));
-
-		V[0][0] = r.x;
-		V[1][0] = r.y;
-		V[2][0] = r.z;
-		V[0][1] = up.x;
-		V[1][1] = up.y;
-		V[2][1] = up.z;
-		V[0][2] = dir.x;
-		V[1][2] = dir.y;
-		V[2][2] = dir.z;
-		V[3][0] = -dot(r,cam.camPos );
-		V[3][1] = -dot(up, cam.camPos);
-		V[3][2] = -dot(dir, cam.camPos);
-
-		//cam.ViewMat = glm::lookAt(cam.camPos, cam.camTarget, up);
-		cam.ViewMat = V;
-
-		//The image is mirrored on X
-		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane, cam.farPlane);		
-
-		//For each object in the level
-		for (auto o : allObjects)
-			Render(o);
-
-		for (auto light : MyAllLights)	
-			Render(light->m);
-
-		glUseProgram(0);
+		 mainDraw();
 
 		// shader map display viewport
-
-
+		 glViewport(0,0, 500, 500);
+		 SmallViewPortDraw();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -403,8 +450,6 @@ void Level::DeletePtr()
 	ptr = nullptr;
 }
 
-#include <fstream>
-#include <sstream>
 
 
 void Level::LoadShadowShader()

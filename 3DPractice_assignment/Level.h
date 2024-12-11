@@ -75,6 +75,8 @@ private:
 	cg::Program* shader;	
 	cg::Program* shadowmap_shader;
 	ShadowMap* shadow_map;
+
+	cg::Program* viewport_shader;
 public:
 	struct GLViewPort
 	{
@@ -94,4 +96,10 @@ public:
 	void LoadShadowShader();
 	GLViewPort MyViewPort;
 	void ShadowMapDraw();
+	void mainDraw();
+	void SmallViewPortDraw();
+	void LoadViewPortShader();
+	GLuint smallview_textureID;
+
+	Model* model;
 };

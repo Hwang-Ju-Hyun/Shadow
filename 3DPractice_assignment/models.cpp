@@ -38,18 +38,18 @@ glm::mat4x4 Model::ComputeMatrix()
 	return temp;
 }
 
-void Model::LoadModel()
+void Model::LoadModel(std::string name)
 {
 	//If exception. use one of our functions
-	if (transf.mesh == "PLANE")
+	if (name == "PLANE")
 		CreateModelPlane();
-	else if (transf.mesh == "CUBE")
+	else if (name == "CUBE")
 		CreateModelCube();
-	else if (transf.mesh == "SPHERE")
+	else if (name == "SPHERE")
 		CreateModelSphere(slices);
-	else if (transf.mesh == "CYLINDER")
+	else if (name == "CYLINDER")
 		CreateModelCylinder(slices);
-	else if (transf.mesh == "CONE")
+	else if (name == "CONE")
 		CreateModelCone(slices);
 	else
 	{
@@ -60,7 +60,7 @@ void Model::LoadModel()
 
 		std::string warn;
 		std::string err;
-		bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, transf.mesh.c_str());
+		bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, name.c_str());
 
 		std::vector<glm::vec3> temp;
 		std::vector<glm::vec3> tempN;
@@ -131,15 +131,14 @@ void Model::LoadModel()
 }
 
 #include "stb_image.h"
-Model::Model(const CS300Parser::Transform& _transform) : transf(_transform), VBO(0), VAO(0)
-{	
-	transf.StartPos = transf.pos;	
+Model::Model(std::string name)
+{
 	//load points
-	LoadModel();
-	
+	LoadModel(name);
+
 	Loadcheckboard();
 
-	int s = points.size();	
+	int s = points.size();
 	int n = normals.size();
 	//vertices
 	for (int i = 0; i < s; i++)
@@ -148,16 +147,16 @@ Model::Model(const CS300Parser::Transform& _transform) : transf(_transform), VBO
 		vertices.push_back(points[i].x);
 		vertices.push_back(points[i].y);
 		vertices.push_back(points[i].z);
-		
+
 		//normals		
 		vertices.push_back(normals[i].x);
 		vertices.push_back(normals[i].y);
-		vertices.push_back(normals[i].z);				
+		vertices.push_back(normals[i].z);
 
 		//UV
 		vertices.push_back(UV[i].x);
 		vertices.push_back(UV[i].y);
-		
+
 		vertices.push_back(tangents[i].x);
 		vertices.push_back(tangents[i].y);
 		vertices.push_back(tangents[i].z);
@@ -165,7 +164,7 @@ Model::Model(const CS300Parser::Transform& _transform) : transf(_transform), VBO
 		vertices.push_back(bitangents[i].x);
 		vertices.push_back(bitangents[i].y);
 		vertices.push_back(bitangents[i].z);
-	}	
+	}
 
 	//normal vector
 	for (int i = 0; i < normals.size(); i++)
@@ -177,9 +176,9 @@ Model::Model(const CS300Parser::Transform& _transform) : transf(_transform), VBO
 
 		normal_vertices.push_back(start);
 		normal_vertices.push_back(end);
-	}	
-	
-	
+	}
+
+
 	Level::GetPtr()->calculate_normal_avg(this);
 
 	//Sanity Check
@@ -198,7 +197,7 @@ Model::Model(const CS300Parser::Transform& _transform) : transf(_transform), VBO
 	glBindBuffer(GL_ARRAY_BUFFER, normal_VBO);
 	glBufferData(GL_ARRAY_BUFFER, normal_vertices.size() * (sizeof(float) * 3), normal_vertices.data(), GL_STATIC_DRAW);
 
-	
+
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	//Assign Coordinates	
 	glGenVertexArrays(1, &VAO);
@@ -217,39 +216,24 @@ Model::Model(const CS300Parser::Transform& _transform) : transf(_transform), VBO
 	glEnableVertexAttribArray(1);
 	/////////////////
 
-
-
-
-	//My EBO
-	/*if (  this->transf.name == "cylinder" || this->transf.name == "sphere")
-	{
-		glGenBuffers(1, &EBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indicies.size(), &indicies[0], GL_STATIC_DRAW);
-	}	*/
+	
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	//Assign Normals
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(3*sizeof(float)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-
-
-
-
-
-
 	//Assign UV
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(6*sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
-	
+
 
 
 	//Assign Tangents
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(8 * sizeof(float)));
 	glEnableVertexAttribArray(3);
-	
+
 	//Assign biTangents
 	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(11 * sizeof(float)));
 	glEnableVertexAttribArray(4);
@@ -259,6 +243,12 @@ Model::Model(const CS300Parser::Transform& _transform) : transf(_transform), VBO
 	glBindVertexArray(0);
 
 	MyLoadTexture();
+}
+
+Model::Model(const CS300Parser::Transform& _transform) : Model(_transform.mesh)
+{
+	transf = _transform;
+	transf.StartPos = transf.pos;	
 }
 
 Model::~Model()
@@ -884,6 +874,7 @@ void Model::MyLoadTexture()
 	
 	//stbi_image_free(m_cData);
 }
+
 
 Light::Light(CS300Parser::Light transf)
 {
