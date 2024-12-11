@@ -223,7 +223,7 @@ void Level::mainDraw()
 
 	//For each object in the level
 	for (auto o : allObjects)
-		Render(o);
+		Render(o,true);
 
 	for (auto light : MyAllLights)
 		Render(light->m);
@@ -262,11 +262,10 @@ void Level::LoadViewPortShader()
 	viewport_shader = new cg::Program(v.str().c_str(), f.str().c_str());
 }
 
-
 void Level::Run()
 {
 	glClearColor(0, 0, 0, 0);
-
+	//glClearDepth(0);
 	float TLastFrame = 0;
 
 	// Main loop
