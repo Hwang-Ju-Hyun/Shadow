@@ -105,4 +105,7 @@ public:
 	GLuint smallview_textureID;
 
 	Model* model;
+
+	glm::mat4 lightProjMat;
+	glm::mat4 lightMatrix;
 };

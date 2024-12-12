@@ -47,6 +47,28 @@ in mat3 tbnMat;//tanget space로 가는 행렬
 uniform mat4 modeltoworld;
 
 in vec3 temp;
+in vec4 LightSpacePos;
+uniform sampler2D  ShadowMapTexture;
+
+float CalcShadow()
+{	
+	//perspective division
+	vec3 projCoords = LightSpacePos.xyz / LightSpacePos.w;
+	projCoords = (projCoords * 0.5) + 0.5; //[-1,1] (NDC) -> [0,1] (Depth) 변환
+
+	//shadow map 텍스처에 저장된 깊이 정보 샘플링
+	float z = texture(ShadowMapTexture, projCoords.xy).r; //깊이 값이 r에 저장되어있음!!!!!!!!!!!
+	float d = projCoords.z; //실제 frag와 light간의 깊이
+	
+	float IsShadow;
+
+	if(d>z)
+		IsShadow=0.0;
+	else
+		IsShadow=1.0;	
+
+	return IsShadow;
+}
 
 void main()
 {
@@ -104,7 +126,9 @@ void main()
 
 			SpotLightEffect=clamp(SpotLightEffect,0,1);
 			
-			Phong += att*(SpotLightEffect*(Diffuse + Specular));			
+			float shadow=CalcShadow();
+
+			Phong += att*(SpotLightEffect*(Diffuse + Specular))*shadow;
 		}
 		else if(uLight[i].type==2)// DIR
 		{
@@ -113,7 +137,7 @@ void main()
 		}
 		else //POINT
 		{			
-			Phong += Ambient + att*(Diffuse+ Specular);																			
+			Phong += Ambient+ att*(Diffuse+ Specular);
 		}		
 		
 	}		
@@ -126,55 +150,14 @@ void main()
 	else
 	{
 		if(hasTexture)		
-			FragColor=texture(myTextureSampler, UV) * vec4(Phong,1.0f);
+		{
+			int a=0;
+			//FragColor=texture(myTextureSampler, UV) * vec4(Phong,1.0f);
+		}			
 		else
 		{
 			//FragColor = vec4(UV,0, 1.0)*vec4(Phong,1.0f);
 			FragColor = vec4(Phong,1.0f);
-		}
-			
+		}			
 	}
-
-
-
-
-		
-
-
-
-	//if(hasTexture)		
-	//	FragColor=texture(myTextureSampler, UV) * vec4(Phong,1.0f);
-	//else
-	//	FragColor = vec4(UV,0, 1.0)*vec4(Phong,1.0f);
-	//FragColor=vec4(Phong,1.0);
-	//FragColor=vec4(fragNormal,1);
-	//FragColor = vec4((normalize(fragNormal)+vec3(1,1,1))/2,1.0f);
-	//if(normal)
-	//{
-	//	FragColor=vec4(1.0,0.0,0.0,1.0);
-	//}
-	//else
-	//{
-	//	if(LightColorOn)
-	//	{
-	//		FragColor=vec4(1.0,1.0,1.0,1.0);			
-	//	}
-	//	else
-	//	{
-	//		if(hasTexture)		
-	//			FragColor=texture(myTextureSampler, UV) * vec4(Phong,1.0f);
-	//		else
-	//			FragColor = vec4(UV,0, 1.0)*vec4(Phong,1.0f);
-	//	}
-	//	
-	//}	
-
-
-	//DEBUG
-	//FragColor = texture(myTextureSampler,UV);
-	//FragColor = texture(uNormalMap,UV);
-	//FragColor = vec4((normalMap_norm + vec3(1,1,1))/2,1);
-	//FragColor = vec4((fragNormal + vec3(1,1,1))/2,1);
-	//FragColor = vec4((temp + vec3(1,1,1))/2,1);
-	//FragColor = vec4(mp_shininess/10,0,0,1);
 }

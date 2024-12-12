@@ -340,11 +340,13 @@ void Level::Run()
 		V[3][0] = -dot(r,   li.pos);
 		V[3][1] = -dot(up,  li.pos);
 		V[3][2] = -dot(dir, li.pos);
-		
+
 		cam.ViewMat = V;
 
 		//The image is mirrored on X
 		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane+20, cam.farPlane);		
+		lightProjMat = cam.ProjMat;
+
 
 		//For each object in the level
 		for (auto o : allObjects)
@@ -393,6 +395,18 @@ void Level::Render(Model* obj, bool IsShaderMap)
 	//Send model matrix to the shader
 	glm::mat4x4 m2w = obj->ComputeMatrix();
 
+	//shadowmap texture
+	shader->setUniform("ShadowMapTexture", obj->textureID);
+
+	//Light¿¡ ´ëÇÑ ViewProjection Matrix
+	auto light = parser.lights[0];
+	auto light_pos = light.pos;
+	auto light_dir = light.dir;
+	lightMatrix=lightProjMat* glm::lookAt(cam.camPos, cam.camTarget,cam.camUp);
+	
+	//light matrix
+	shader->setUniform("LightTransform", lightMatrix);
+
 	//Send view matrix to the shader
 	shader->setUniform("model", cam.ProjMat * cam.ViewMat * m2w);	
 
@@ -430,7 +444,7 @@ void Level::Render(Model* obj, bool IsShaderMap)
 	glm::vec3 campos = (Level::GetPtr()->cam.camPos);
 	shader->setUniform("uCameraPos", campos);
 	shader->setUniform("modeltoworld", m2w);	
-		
+	
 
 	for (int i = 0; i < MyLightsize; i++)
 	{		

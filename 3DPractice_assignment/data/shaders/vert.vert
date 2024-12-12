@@ -16,6 +16,12 @@ out mat3 tbnMat;
 out vec2 UV;
 out vec3 temp;
 
+
+//그림자 계산을 위해서는 해당 fragment가 카메라 기준으로 어느 위치인지 알아야 하기 때문에
+//아래와 같이 계산하여 varying으로 fragment로 넘김
+out vec4 LightSpacePos;
+uniform mat4 LightTransform;
+
 void main()
 {
     gl_Position = model * vPosition;
@@ -34,4 +40,6 @@ void main()
 
     //goto object space matrix from tangents
     tbnMat = transpose(mat3(Tan, Bin, Nor));//columm major
+
+    LightSpacePos= LightTransform*(modeltoworld * vPosition);
 }
