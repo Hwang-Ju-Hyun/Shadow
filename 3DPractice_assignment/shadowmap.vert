@@ -1,10 +1,10 @@
 #version 400
 
-layout(location=0) in vec4 vPosition;
+layout(location = 0) in vec4 vPosition;
 
 uniform mat4 model;
 
 void main()
 {
-	gl_Position= model * vPosition;
+	gl_Position = model * vPosition;
 }

@@ -213,7 +213,7 @@ void Level::mainDraw()
 	V[3][0] = -dot(r, cam.camPos);
 	V[3][1] = -dot(up, cam.camPos);
 	V[3][2] = -dot(dir, cam.camPos);
-
+	
 	//cam.ViewMat = glm::lookAt(cam.camPos, cam.camTarget, up);
 	cam.ViewMat = V;
 
@@ -223,7 +223,7 @@ void Level::mainDraw()
 
 	//For each object in the level
 	for (auto o : allObjects)
-		Render(o,true);
+		Render(o);
 
 	for (auto light : MyAllLights)
 		Render(light->m);
@@ -235,8 +235,8 @@ void Level::SmallViewPortDraw()
 {	
 	//use shader program		
 	glUseProgram(viewport_shader->handle);		
-	glBindTextureUnit(0, shadow_map->m_iShadowMapTextureID);
-	viewport_shader->setUniform("viewport_texture", 0);
+	glBindTextureUnit(shadow_map->m_iShadowMapTextureUnit, shadow_map->m_iShadowMapTextureID);
+	viewport_shader->setUniform("viewport_texture", shadow_map->m_iShadowMapTextureUnit);
 	glBindVertexArray(model->VAO);
 	glDrawArrays(GL_TRIANGLES, 0,6);
 	glUseProgram(0);
@@ -287,17 +287,24 @@ void Level::Run()
 
 
 		//////////////////////////////////////
-		// pass 1 - rendering to screen///////
-		//////////////////////////////////////		
+		// pass 1 - rendering to shadowmap////
+		//////////////////////////////////////	
+
+		glViewport(0, 0, W_WIDTH, W_HEIGHT);
+
+
 		shadow_map->Bind();		
+
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		glUseProgram(shadowmap_shader->handle);
-		CS300Parser::Light li = parser.lights[0];
+		glUseProgram(/*shadowmap_*/shader->handle);		
+
+		//Calculate Camera Matrix
+		auto li=parser.lights[0];
+		glm::vec3 temp_up = glm::vec3(0, 1, 0);
 		glm::vec3 dir = glm::normalize(li.dir);
 		dir = -dir;
-		glm::vec3 lightUp = { 0,1,0 };
-		glm::vec3 r = glm::normalize(glm::cross(lightUp, dir));
+		glm::vec3 r = glm::normalize(glm::cross(temp_up, dir));
 		glm::mat4 V = glm::mat4(1);
 		glm::vec3 up = glm::normalize(glm::cross(dir, r));
 
@@ -310,15 +317,35 @@ void Level::Run()
 		V[0][2] = dir.x;
 		V[1][2] = dir.y;
 		V[2][2] = dir.z;
-		V[3][0] = -dot(r, li.pos);
-		V[3][1] = -dot(up, li.pos);
+		V[3][0] = -dot(r,   li.pos);
+		V[3][1] = -dot(up,  li.pos);
 		V[3][2] = -dot(dir, li.pos);
+
+		//Calculate Camera Matrix
+		/*glm::vec3 dir = glm::normalize(cam.camTarget - cam.camPos);
+		dir = -dir;
+		glm::vec3 r = glm::normalize(glm::cross(cam.camUp, dir));
+		glm::mat4 V = glm::mat4(1);
+		glm::vec3 up = glm::normalize(glm::cross(dir, r));
+
+		V[0][0] = r.x;
+		V[1][0] = r.y;
+		V[2][0] = r.z;
+		V[0][1] = up.x;
+		V[1][1] = up.y;
+		V[2][1] = up.z;
+		V[0][2] = dir.x;
+		V[1][2] = dir.y;
+		V[2][2] = dir.z;
+		V[3][0] = -dot(r, cam.camPos);
+		V[3][1] = -dot(up, cam.camPos);
+		V[3][2] = -dot(dir, cam.camPos);*/
 
 		//cam.ViewMat = glm::lookAt(cam.camPos, cam.camTarget, up);
 		cam.ViewMat = V;
 
 		//The image is mirrored on X
-		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane, cam.farPlane);
+		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane+15, cam.farPlane);		
 
 		//For each object in the level
 		for (auto o : allObjects)
@@ -327,24 +354,29 @@ void Level::Run()
 		shadow_map->UnBind();
 		glUseProgram(0);
 		
+		// 텍스처 데이터를 받아올 버퍼 할당
+		//unsigned char* textureData = new unsigned char[W_WIDTH * W_HEIGHT * 4]; // RGBA는 4채널
+		//glBindTexture(GL_TEXTURE_2D, shadow_map->m_iShadowMapTextureID); 
+		// 텍스처 데이터를 받아옴
+		//glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, textureData);
+		//int a = 0;
+		//delete[]textureData;
+		 
 		
 		//////////////////////////////////////
 		// pass 2 - rendering to screen///////
 		//////////////////////////////////////	
 		
 		// Render graphics here
-		 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);					 		 	 
-		 
-		 glViewport(0, 0, W_WIDTH, W_HEIGHT);
-		 mainDraw();
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);					 		 	 
+		
+		glViewport(0, 0, W_WIDTH, W_HEIGHT);
+		mainDraw();
 
-
-		 glViewport(0, 0, 500, 500);
-		 SmallViewPortDraw();
-
-
+		glViewport(0, 0, 500, 500);
+		SmallViewPortDraw();
+		
 				
-
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
@@ -385,7 +417,7 @@ void Level::Render(Model* obj, bool IsShaderMap)
 	
 	
 	shader->setUniform("myTextureSampler", unit);
-	shader->setUniform("uNormalMap", 4);
+	shader->setUniform("uNormalMap",4);
 
 	shader->setUniform("hasTexture", b_tex);
 	shader->setUniform("normal", b_normal);		
