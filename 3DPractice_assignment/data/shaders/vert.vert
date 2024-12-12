@@ -21,6 +21,10 @@ out vec3 temp;
 //아래와 같이 계산하여 varying으로 fragment로 넘김
 out vec4 LightSpacePos;
 uniform mat4 LightTransform;
+uniform vec3 LightPerspective;
+uniform mat4 WorldToView;
+out vec3 VL;
+out mat4 TC;
 
 void main()
 {
@@ -41,5 +45,5 @@ void main()
     //goto object space matrix from tangents
     tbnMat = transpose(mat3(Tan, Bin, Nor));//columm major
 
-    LightSpacePos= LightTransform*(modeltoworld * vPosition);
+    LightSpacePos= LightTransform*(inverse(WorldToView) * model * vPosition);
 }

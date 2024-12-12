@@ -62,22 +62,22 @@ int Level::Initialize()
 	}
 	for (auto light : parser.lights)
 	{
-		light.obj.sca = { 10.f,10.f,10.f };		
+		light.obj.sca = { 10.f,10.f,10.f };
 		//TODO: 
-				
+
 		MyAllLights.push_back(new Light(light));
 		int idx = 0;
 		//allObjects.push_back(new Model(light.obj));		
-		if (light.type == "SPOT"||light.type=="POINT")
-		{			
+		if (light.type == "SPOT" || light.type == "POINT")
+		{
 			light.startPos = light.pos;
-			light.obj.StartPos = light.startPos;			
+			light.obj.StartPos = light.startPos;
 			MyAllLights[idx]->m->transf.StartPos = light.pos;
 			idx++;
 		}
-			
-	}	
-	
+
+	}
+
 
 	//Save camera
 	cam.fovy = parser.fovy;
@@ -87,25 +87,25 @@ int Level::Initialize()
 	cam.farPlane = parser.farPlane;
 	cam.camPos = parser.camPos;
 	cam.camTarget = parser.camTarget;
-	cam.camUp = parser.camUp;	
-	cam.camRight = glm::vec3(1,0,0);
-	cam.camFront = glm::vec3(0,0,100);
-	
+	cam.camUp = parser.camUp;
+	cam.camRight = glm::vec3(1, 0, 0);
+	cam.camFront = glm::vec3(0, 0, 100);
+
 	{
 		MyViewPort.x = 0;
 		MyViewPort.y = 0;
 		MyViewPort.width = 500;
 		MyViewPort.height = 500;
 	}
-	
+
 	//ShadowMap
 	int shadow_map_w;
-	int shadow_map_h;	
+	int shadow_map_h;
 	glfwGetWindowSize(window, &shadow_map_w, &shadow_map_h);
 	shadow_map = new ShadowMap(shadow_map_w, shadow_map_h);
 	shadow_map->Bind();
 	shadow_map->UnBind();
-		
+
 
 
 
@@ -133,7 +133,7 @@ void Level::LightUpdate(float _dt)
 	time += _dt;
 	std::vector<CS300Parser::Light>& light = parser.lights;
 	for (int i = 0; i < MyAllLights.size(); i++)
-	{				
+	{
 		MyAllLights[i]->m->transf.pos = MyAllLights[i]->m->transf.StartPos;
 		if (light[i].anims.size() > 0)
 		{
@@ -153,7 +153,7 @@ int Level::GetType(std::string _str)
 		return 1;
 	else if (_str == "DIR")
 		return 2;
-	else if(_str=="SPOT")
+	else if (_str == "SPOT")
 		return 3;
 }
 
@@ -172,12 +172,12 @@ void Level::calculate_normal_avg(Model* _obj)
 			for (int j = 0; j < nor_size; j++)
 			{
 				if (start == _obj->points[j])
-				{		
-					cnt++;					
+				{
+					cnt++;
 					end += (_obj->normals[j]);
 				}
-			}			
-			_obj->normal_vertices.push_back(start);			
+			}
+			_obj->normal_vertices.push_back(start);
 			_obj->normal_vertices.push_back(start + glm::normalize(end));
 		}
 	}
@@ -213,13 +213,13 @@ void Level::mainDraw()
 	V[3][0] = -dot(r, cam.camPos);
 	V[3][1] = -dot(up, cam.camPos);
 	V[3][2] = -dot(dir, cam.camPos);
-	
+
 	//cam.ViewMat = glm::lookAt(cam.camPos, cam.camTarget, up);
 	cam.ViewMat = V;
 
 	//The image is mirrored on X
 	cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane, cam.farPlane);
-	
+
 
 	//For each object in the level
 	for (auto o : allObjects)
@@ -232,13 +232,13 @@ void Level::mainDraw()
 }
 
 void Level::SmallViewPortDraw()
-{	
+{
 	//use shader program		
-	glUseProgram(viewport_shader->handle);		
+	glUseProgram(viewport_shader->handle);
 	glBindTextureUnit(shadow_map->m_iShadowMapTextureUnit, shadow_map->m_iShadowMapTextureID);
 	viewport_shader->setUniform("viewport_texture", shadow_map->m_iShadowMapTextureUnit);
 	glBindVertexArray(model->VAO);
-	glDrawArrays(GL_TRIANGLES, 0,6);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glUseProgram(0);
 }
 
@@ -263,7 +263,7 @@ void Level::LoadViewPortShader()
 }
 
 void Level::RenderDepth(Model* obj)
-{	
+{
 	//use obj VBO
 	glBindBuffer(GL_ARRAY_BUFFER, obj->VBO);
 	//use obj VAO
@@ -276,7 +276,7 @@ void Level::RenderDepth(Model* obj)
 	shadowmap_shader->setUniform("model", cam.ProjMat * cam.ViewMat * m2w);
 
 	glBindTextureUnit(0, obj->textureID);
-	
+
 	//draw
 	glDrawArrays(GL_TRIANGLES, 0, obj->points.size());
 
@@ -293,7 +293,7 @@ void Level::Run()
 	float TLastFrame = 0;
 
 	// Main loop
-	while (!glfwWindowShouldClose(window)) 
+	while (!glfwWindowShouldClose(window))
 	{
 		float TCurrentFrame = 0;
 
@@ -313,14 +313,14 @@ void Level::Run()
 
 		glViewport(0, 0, W_WIDTH, W_HEIGHT);
 
-		shadow_map->Bind();		
+		shadow_map->Bind();
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		glUseProgram(shadowmap_shader->handle);		
+		glUseProgram(shadowmap_shader->handle);
 
 		//Calculate Camera Matrix
-		auto li=parser.lights[0];
+		auto li = parser.lights[0];
 		glm::vec3 temp_up = glm::vec3(0, 1, 0);
 		glm::vec3 dir = glm::normalize(li.dir);
 		dir = -dir;
@@ -337,43 +337,51 @@ void Level::Run()
 		V[0][2] = dir.x;
 		V[1][2] = dir.y;
 		V[2][2] = dir.z;
-		V[3][0] = -dot(r,   li.pos);
-		V[3][1] = -dot(up,  li.pos);
+		V[3][0] = -dot(r, li.pos);
+		V[3][1] = -dot(up, li.pos);
 		V[3][2] = -dot(dir, li.pos);
 
 		cam.ViewMat = V;
 
 		//The image is mirrored on X
-		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane+20, cam.farPlane);		
-		lightProjMat = cam.ProjMat;
+		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane + 20, cam.farPlane);
+		lightProjMat = glm::perspective(
+			glm::radians(60.0f),
+			float(W_WIDTH/W_HEIGHT),
+			5.f,
+			500.0f
+		);
 
 
 		//For each object in the level
 		for (auto o : allObjects)
+		{
+			if (o->transf.mesh=="PLANE")
+				continue;
 			RenderDepth(o);
-
+		}
 		shadow_map->UnBind();
-		glUseProgram(0);		
-		 		
+		glUseProgram(0);
+
 		//////////////////////////////////////
 		// pass 2 - rendering to screen///////
 		//////////////////////////////////////	
-		
+
 		// Render graphics here
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);					 		 	 
-		
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		glViewport(0, 0, W_WIDTH, W_HEIGHT);
 		mainDraw();
 
 		glViewport(0, 0, 500, 500);
 		SmallViewPortDraw();
-		
-				
+
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 
 		std::chrono::time_point<std::chrono::steady_clock> endtime = std::chrono::steady_clock::now();
-		
+
 		TCurrentFrame = std::chrono::duration<float>(endtime - time).count();
 		TLastFrame = TCurrentFrame;
 	}
@@ -394,7 +402,7 @@ void Level::Render(Model* obj, bool IsShaderMap)
 
 	//Send model matrix to the shader
 	glm::mat4x4 m2w = obj->ComputeMatrix();
-
+	
 	//shadowmap texture
 	shader->setUniform("ShadowMapTexture", obj->textureID);
 
@@ -402,13 +410,18 @@ void Level::Render(Model* obj, bool IsShaderMap)
 	auto light = parser.lights[0];
 	auto light_pos = light.pos;
 	auto light_dir = light.dir;
-	lightMatrix=lightProjMat* glm::lookAt(cam.camPos, cam.camTarget,cam.camUp);
-	
+	auto light_center = light_pos + light_dir;
+	lightMatrix = glm::inverse(glm::lookAt(light_pos, light_dir, glm::vec3(0, 1, 0)));
+
 	//light matrix
 	shader->setUniform("LightTransform", lightMatrix);
-
+	shader->setUniform("LightPerspective", lightProjMat);	
 	//Send view matrix to the shader
-	shader->setUniform("model", cam.ProjMat * cam.ViewMat * m2w);	
+	shader->setUniform("model", cam.ProjMat * cam.ViewMat * m2w);
+
+	glm::mat4 w2v = cam.ProjMat * cam.ViewMat;
+
+	shader->setUniform("WorldToView", w2v);
 
 	if (IsShaderMap)
 		glBindTextureUnit(shadow_map->m_iShadowMapTextureUnit, shadow_map->m_iShadowMapTextureID);
@@ -417,15 +430,15 @@ void Level::Render(Model* obj, bool IsShaderMap)
 
 	glBindTextureUnit(4, obj->m_iNormalID);
 
-	GLuint unit = IsShaderMap ? shadow_map->m_iShadowMapTextureUnit : 0;		
-	
-	
+	GLuint unit = IsShaderMap ? shadow_map->m_iShadowMapTextureUnit : 0;
+
+
 	shader->setUniform("myTextureSampler", unit);
-	shader->setUniform("uNormalMap",4);
+	shader->setUniform("uNormalMap", 4);
 
 	shader->setUniform("hasTexture", b_tex);
-	shader->setUniform("normal", b_normal);		
-	
+	shader->setUniform("normal", b_normal);
+
 	if (obj->transf.name == "")
 	{
 		shader->setUniform("LightColorOn", true);
@@ -435,23 +448,23 @@ void Level::Render(Model* obj, bool IsShaderMap)
 		shader->setUniform("LightColorOn", false);
 	}
 
-	std::vector<CS300Parser::Light> all_lights=parser.lights;
-	int MyLightsize=MyAllLights.size();
-	int light_size = all_lights.size();	
-	shader->setUniform("uLightNum", light_size);	
+	std::vector<CS300Parser::Light> all_lights = parser.lights;
+	int MyLightsize = MyAllLights.size();
+	int light_size = all_lights.size();
+	shader->setUniform("uLightNum", light_size);
 
 	glm::vec3 camdir = glm::normalize(Level::GetPtr()->cam.camPos) - (Level::GetPtr()->cam.camTarget);
 	glm::vec3 campos = (Level::GetPtr()->cam.camPos);
 	shader->setUniform("uCameraPos", campos);
-	shader->setUniform("modeltoworld", m2w);	
-	
+	shader->setUniform("modeltoworld", m2w);
+
 
 	for (int i = 0; i < MyLightsize; i++)
-	{		
+	{
 		shader->setUniform("uLight[" + std::to_string(i) + "].type", GetType(all_lights[i].type));
 		shader->setUniform("uLight[" + std::to_string(i) + "].col", all_lights[i].col);
 		parser.lights[i].pos = MyAllLights[i]->m->transf.pos;
-				
+
 		shader->setUniform("uLight[" + std::to_string(i) + "].positionWorld", all_lights[i].pos);
 		shader->setUniform("uLight[" + std::to_string(i) + "].amb", all_lights[i].amb);
 		shader->setUniform("uLight[" + std::to_string(i) + "].att", all_lights[i].att);
@@ -462,9 +475,9 @@ void Level::Render(Model* obj, bool IsShaderMap)
 		shader->setUniform("uLight[" + std::to_string(i) + "].falloff", all_lights[i].falloff);
 	}
 
-	CS300Parser::MaterialParameters mp;	
-	shader->setUniform("mp_ambient",  mp.ambient);
-	shader->setUniform("mp_diffuse",  mp.diffuse);
+	CS300Parser::MaterialParameters mp;
+	shader->setUniform("mp_ambient", mp.ambient);
+	shader->setUniform("mp_diffuse", mp.diffuse);
 	shader->setUniform("mp_specular", mp.specular);
 	shader->setUniform("mp_shininess", obj->transf.ns);
 
@@ -472,10 +485,10 @@ void Level::Render(Model* obj, bool IsShaderMap)
 	//draw
 	glDrawArrays(GL_TRIANGLES, 0, obj->points.size());
 
-	glBindBuffer(GL_ARRAY_BUFFER,0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-	glBindTexture(GL_TEXTURE_2D,0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Level::ShadowMapRender(Model* obj)
@@ -483,16 +496,16 @@ void Level::ShadowMapRender(Model* obj)
 }
 
 void Level::RenderNormal(Model* _obj)
-{	
+{
 	glBindBuffer(GL_ARRAY_BUFFER, _obj->normal_VBO);
-	glBindVertexArray(_obj->normal_VAO);	
+	glBindVertexArray(_obj->normal_VAO);
 
 	glm::mat4x4 m2w = _obj->ComputeMatrix();
 	shader->setUniform("model", cam.ProjMat * cam.ViewMat * m2w);
-	glDrawArrays(GL_LINES, 0, _obj->points.size() *2);	
+	glDrawArrays(GL_LINES, 0, _obj->points.size() * 2);
 }
 
-Level::Level(): window (nullptr), shader(nullptr)
+Level::Level() : window(nullptr), shader(nullptr)
 {
 
 }
@@ -575,7 +588,7 @@ void Level::ReloadShaderProgram()
 
 	shader = new cg::Program(v.str().c_str(), f.str().c_str());
 
-		
+
 }
 
 void Level::RotateCamY(float angle)

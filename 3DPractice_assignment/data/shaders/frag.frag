@@ -52,7 +52,6 @@ uniform sampler2D  ShadowMapTexture;
 
 float CalcShadow()
 {	
-	//perspective division
 	vec3 projCoords = LightSpacePos.xyz / LightSpacePos.w;
 	projCoords = (projCoords * 0.5) + 0.5; //[-1,1] (NDC) -> [0,1] (Depth) º¯È¯
 
