@@ -262,6 +262,30 @@ void Level::LoadViewPortShader()
 	viewport_shader = new cg::Program(v.str().c_str(), f.str().c_str());
 }
 
+void Level::RenderDepth(Model* obj)
+{	
+	//use obj VBO
+	glBindBuffer(GL_ARRAY_BUFFER, obj->VBO);
+	//use obj VAO
+	glBindVertexArray(obj->VAO);
+
+	//Send model matrix to the shader
+	glm::mat4x4 m2w = obj->ComputeMatrix();
+
+	//Send view matrix to the shader
+	shadowmap_shader->setUniform("model", cam.ProjMat * cam.ViewMat * m2w);
+
+	glBindTextureUnit(0, obj->textureID);
+	
+	//draw
+	glDrawArrays(GL_TRIANGLES, 0, obj->points.size());
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void Level::Run()
 {
 	glClearColor(0, 0, 0, 0);
@@ -271,7 +295,6 @@ void Level::Run()
 	// Main loop
 	while (!glfwWindowShouldClose(window)) 
 	{
-
 		float TCurrentFrame = 0;
 
 		std::chrono::time_point<std::chrono::steady_clock> time = std::chrono::steady_clock::now();
@@ -284,20 +307,17 @@ void Level::Run()
 		std::vector<CS300Parser::Light> all_lights = parser.lights;
 		LightUpdate(TLastFrame);
 
-
-
 		//////////////////////////////////////
-		// pass 1 - rendering to shadowmap////
+		/// pass 1 - rendering to shadowmap///
 		//////////////////////////////////////	
 
 		glViewport(0, 0, W_WIDTH, W_HEIGHT);
-
 
 		shadow_map->Bind();		
 
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		glUseProgram(/*shadowmap_*/shader->handle);		
+		glUseProgram(shadowmap_shader->handle);		
 
 		//Calculate Camera Matrix
 		auto li=parser.lights[0];
@@ -320,49 +340,19 @@ void Level::Run()
 		V[3][0] = -dot(r,   li.pos);
 		V[3][1] = -dot(up,  li.pos);
 		V[3][2] = -dot(dir, li.pos);
-
-		//Calculate Camera Matrix
-		/*glm::vec3 dir = glm::normalize(cam.camTarget - cam.camPos);
-		dir = -dir;
-		glm::vec3 r = glm::normalize(glm::cross(cam.camUp, dir));
-		glm::mat4 V = glm::mat4(1);
-		glm::vec3 up = glm::normalize(glm::cross(dir, r));
-
-		V[0][0] = r.x;
-		V[1][0] = r.y;
-		V[2][0] = r.z;
-		V[0][1] = up.x;
-		V[1][1] = up.y;
-		V[2][1] = up.z;
-		V[0][2] = dir.x;
-		V[1][2] = dir.y;
-		V[2][2] = dir.z;
-		V[3][0] = -dot(r, cam.camPos);
-		V[3][1] = -dot(up, cam.camPos);
-		V[3][2] = -dot(dir, cam.camPos);*/
-
-		//cam.ViewMat = glm::lookAt(cam.camPos, cam.camTarget, up);
+		
 		cam.ViewMat = V;
 
 		//The image is mirrored on X
-		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane+15, cam.farPlane);		
+		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane+20, cam.farPlane);		
 
 		//For each object in the level
 		for (auto o : allObjects)
-			Render(o);
+			RenderDepth(o);
 
 		shadow_map->UnBind();
-		glUseProgram(0);
-		
-		// 텍스처 데이터를 받아올 버퍼 할당
-		//unsigned char* textureData = new unsigned char[W_WIDTH * W_HEIGHT * 4]; // RGBA는 4채널
-		//glBindTexture(GL_TEXTURE_2D, shadow_map->m_iShadowMapTextureID); 
-		// 텍스처 데이터를 받아옴
-		//glGetTexImage(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, textureData);
-		//int a = 0;
-		//delete[]textureData;
-		 
-		
+		glUseProgram(0);		
+		 		
 		//////////////////////////////////////
 		// pass 2 - rendering to screen///////
 		//////////////////////////////////////	

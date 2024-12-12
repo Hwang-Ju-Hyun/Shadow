@@ -112,9 +112,7 @@ void main()
 			Phong += att*(Diffuse + Specular);		
 		}
 		else //POINT
-		{
-			
-
+		{			
 			Phong += Ambient + att*(Diffuse+ Specular);																			
 		}		
 		

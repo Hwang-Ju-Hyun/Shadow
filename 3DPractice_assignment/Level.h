@@ -99,6 +99,9 @@ public:
 	void mainDraw();
 	void SmallViewPortDraw();
 	void LoadViewPortShader();
+
+	void RenderDepth(Model* obj);
+
 	GLuint smallview_textureID;
 
 	Model* model;
