@@ -52,7 +52,7 @@ uniform sampler2D  ShadowMapTexture;
 
 float CalcShadow()
 {		
-	float bias=0.00001f;
+	float bias=0.001f;
 
 	vec3 projCoords = LightSpacePos.xyz / LightSpacePos.w;
 	projCoords = (projCoords * 0.5) + 0.5; //[-1,1] (NDC) -> [0,1] (Depth) º¯È¯
@@ -127,18 +127,20 @@ void main()
 
 			SpotLightEffect=clamp(SpotLightEffect,0,1);
 			
-			//float shadow=CalcShadow();
+			float shadow=CalcShadow();
 
-			Phong += att*(SpotLightEffect*(Diffuse + Specular));
+			Phong += att*(SpotLightEffect*(Diffuse + Specular)*(1-shadow));
 		}
 		else if(uLight[i].type==2)// DIR
 		{
 			att=1.f;
-			Phong += att*(Diffuse + Specular);		
+			float shadow=CalcShadow();
+			Phong += att*(Diffuse + Specular)*(1-shadow);		
 		}
 		else //POINT
 		{			
-			Phong += Ambient+ att*(Diffuse+ Specular);
+			float shadow=CalcShadow();
+			Phong += Ambient+ att*(Diffuse+ Specular)*(1-shadow);
 		}		
 		
 	}		
@@ -158,7 +160,7 @@ void main()
 		else
 		{
 			float shadow=CalcShadow();			
-			FragColor = vec4(Phong,1.0f)*(1-shadow);
+			FragColor = vec4(Phong,1.0f);
 		}			
 	}
 }

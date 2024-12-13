@@ -68,7 +68,7 @@ int Level::Initialize()
 		MyAllLights.push_back(new Light(light));
 		int idx = 0;
 		//allObjects.push_back(new Model(light.obj));		
-		if (light.type == "SPOT" || light.type == "POINT"|| light.type == "DIR")
+		if (light.type == "SPOT" || light.type == "POINT" || light.type == "DIR")
 		{
 			light.startPos = light.pos;
 			light.obj.StartPos = light.startPos;
@@ -105,12 +105,6 @@ int Level::Initialize()
 	shadow_map = new ShadowMap(shadow_map_w, shadow_map_h);
 	shadow_map->Bind();
 	shadow_map->UnBind();
-
-
-
-
-	//depth만 보여주는 텍스쳐 생성	
-
 
 	//Shader program
 	ReloadShaderProgram();
@@ -218,7 +212,7 @@ void Level::mainDraw()
 	cam.ViewMat = V;
 
 	//The image is mirrored on X
-	cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane+2, cam.farPlane);
+	cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane + 2, cam.farPlane);
 
 
 	//For each object in the level
@@ -236,7 +230,7 @@ void Level::SmallViewPortDraw()
 	//use shader program		
 	glUseProgram(viewport_shader->handle);
 	glBindTextureUnit(0, shadow_map->m_iShadowMapTextureID);
-	viewport_shader->setUniform("viewport_texture",0);
+	viewport_shader->setUniform("viewport_texture", 0);
 	glBindVertexArray(model->VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glUseProgram(0);
@@ -310,7 +304,6 @@ void Level::Run()
 		//////////////////////////////////////
 		/// pass 1 - rendering to shadowmap///
 		//////////////////////////////////////	
-
 		glViewport(0, 0, W_WIDTH, W_HEIGHT);
 
 		shadow_map->Bind();
@@ -344,17 +337,17 @@ void Level::Run()
 		cam.ViewMat = V;
 
 		//The image is mirrored on X
-		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane+2, cam.farPlane);
-
-		
-
+		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane + 2, cam.farPlane);
 
 		//For each object in the level
 		for (auto o : allObjects)
 		{
+			if (o->transf.mesh == "PLANE")
+				continue;
 			RenderDepth(o);
-			
 		}
+			
+
 		shadow_map->UnBind();
 		glUseProgram(0);
 
@@ -370,7 +363,6 @@ void Level::Run()
 
 		glViewport(0, 0, 300, 300);
 		SmallViewPortDraw();
-
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -400,16 +392,8 @@ void Level::Render(Model* obj, bool IsShaderMap)
 
 	//shadowmap texture
 	//shader->setUniform("ShadowMapTexture", obj->textureID);
-	shader->setUniform("ShadowMapTexture",9);	
+	shader->setUniform("ShadowMapTexture", 9);
 	glBindTextureUnit(9, shadow_map->m_iShadowMapTextureID);
-
-
-
-	//Light에 대한 ViewProjection Matrix
-	auto light = parser.lights[0];
-	auto light_pos = light.pos;
-	auto light_dir = light.dir;
-	auto light_center = light_pos + light_dir;
 
 	auto li = parser.lights[0];
 	glm::vec3 temp_up = glm::vec3(0, 1, 0);
@@ -433,7 +417,7 @@ void Level::Render(Model* obj, bool IsShaderMap)
 	V[3][1] = -dot(up, li.pos);
 	V[3][2] = -dot(dir, li.pos);
 
-	lightMatrix = cam.ProjMat *V/*glm::lookAt(light_pos, light_center, up)*/; //lightProj x 카메라 행렬 
+	lightMatrix = cam.ProjMat * V/*glm::lookAt(light_pos, light_center, up)*/; //lightProj x 카메라 행렬 
 
 	//light matrix
 	shader->setUniform("LightTransform", lightMatrix);
@@ -442,8 +426,7 @@ void Level::Render(Model* obj, bool IsShaderMap)
 
 	glBindTextureUnit(0, obj->textureID);
 
-	glBindTextureUnit(4, obj->m_iNormalID);	
-
+	glBindTextureUnit(4, obj->m_iNormalID);
 
 	shader->setUniform("myTextureSampler", 0);
 	shader->setUniform("uNormalMap", 4);
