@@ -8,11 +8,9 @@ public:
 public:
 	GLuint m_iShadowMapWidth;
 	GLuint m_iShadowMapHeight;
-	GLuint m_iFBO;
-	GLuint m_iShadowMapTextureUnit;
+	GLuint m_iFBO;	
 	GLuint m_iShadowMapTextureID;
 public:
-	void Bind();
-	void Read();
+	void Bind();	
 	void UnBind();
 };

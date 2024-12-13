@@ -62,13 +62,13 @@ int Level::Initialize()
 	}
 	for (auto light : parser.lights)
 	{
-		light.obj.sca = { 10.f,10.f,10.f };
+		light.obj.sca = { 1.f,1.f,1.f };
 		//TODO: 
 
 		MyAllLights.push_back(new Light(light));
 		int idx = 0;
 		//allObjects.push_back(new Model(light.obj));		
-		if (light.type == "SPOT" || light.type == "POINT")
+		if (light.type == "SPOT" || light.type == "POINT"|| light.type == "DIR")
 		{
 			light.startPos = light.pos;
 			light.obj.StartPos = light.startPos;
@@ -143,7 +143,7 @@ void Level::LightUpdate(float _dt)
 				light[i].pos = light[i].anims[j].Update(MyAllLights[i]->m->transf.pos, time);
 			}
 		}
-		light[i].obj.sca = { 5.f,5.f,5.f };
+		light[i].obj.sca = { 1.f,1.f,1.f };
 	}
 }
 
@@ -218,7 +218,7 @@ void Level::mainDraw()
 	cam.ViewMat = V;
 
 	//The image is mirrored on X
-	cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane, cam.farPlane);
+	cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane+2, cam.farPlane);
 
 
 	//For each object in the level
@@ -235,8 +235,8 @@ void Level::SmallViewPortDraw()
 {
 	//use shader program		
 	glUseProgram(viewport_shader->handle);
-	glBindTextureUnit(shadow_map->m_iShadowMapTextureUnit, shadow_map->m_iShadowMapTextureID);
-	viewport_shader->setUniform("viewport_texture", shadow_map->m_iShadowMapTextureUnit);
+	glBindTextureUnit(0, shadow_map->m_iShadowMapTextureID);
+	viewport_shader->setUniform("viewport_texture",0);
 	glBindVertexArray(model->VAO);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	glUseProgram(0);
@@ -344,21 +344,16 @@ void Level::Run()
 		cam.ViewMat = V;
 
 		//The image is mirrored on X
-		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane + 20, cam.farPlane);
-		lightProjMat = glm::perspective(
-			glm::radians(60.0f),
-			float(W_WIDTH/W_HEIGHT),
-			5.f,
-			500.0f
-		);
+		cam.ProjMat = glm::perspective(glm::radians(cam.fovy), cam.width / cam.height, cam.nearPlane+2, cam.farPlane);
+
+		
 
 
 		//For each object in the level
 		for (auto o : allObjects)
 		{
-			if (o->transf.mesh=="PLANE")
-				continue;
 			RenderDepth(o);
+			
 		}
 		shadow_map->UnBind();
 		glUseProgram(0);
@@ -373,7 +368,7 @@ void Level::Run()
 		glViewport(0, 0, W_WIDTH, W_HEIGHT);
 		mainDraw();
 
-		glViewport(0, 0, 500, 500);
+		glViewport(0, 0, 300, 300);
 		SmallViewPortDraw();
 
 
@@ -402,38 +397,55 @@ void Level::Render(Model* obj, bool IsShaderMap)
 
 	//Send model matrix to the shader
 	glm::mat4x4 m2w = obj->ComputeMatrix();
-	
+
 	//shadowmap texture
-	shader->setUniform("ShadowMapTexture", obj->textureID);
+	//shader->setUniform("ShadowMapTexture", obj->textureID);
+	shader->setUniform("ShadowMapTexture",9);	
+	glBindTextureUnit(9, shadow_map->m_iShadowMapTextureID);
+
+
 
 	//Light에 대한 ViewProjection Matrix
 	auto light = parser.lights[0];
 	auto light_pos = light.pos;
 	auto light_dir = light.dir;
 	auto light_center = light_pos + light_dir;
-	lightMatrix = glm::inverse(glm::lookAt(light_pos, light_dir, glm::vec3(0, 1, 0)));
+
+	auto li = parser.lights[0];
+	glm::vec3 temp_up = glm::vec3(0, 1, 0);
+	glm::vec3 dir = glm::normalize(li.dir);
+	dir = -dir;
+	glm::vec3 r = glm::normalize(glm::cross(temp_up, dir));
+	glm::mat4 V = glm::mat4(1);
+	glm::vec3 up = glm::normalize(glm::cross(dir, r));
+
+	//glm::lookAt(light_pos, light_center, up); <-월드에서 카메라 뷰로 
+	V[0][0] = r.x;
+	V[1][0] = r.y;
+	V[2][0] = r.z;
+	V[0][1] = up.x;
+	V[1][1] = up.y;
+	V[2][1] = up.z;
+	V[0][2] = dir.x;
+	V[1][2] = dir.y;
+	V[2][2] = dir.z;
+	V[3][0] = -dot(r, li.pos);
+	V[3][1] = -dot(up, li.pos);
+	V[3][2] = -dot(dir, li.pos);
+
+	lightMatrix = cam.ProjMat *V/*glm::lookAt(light_pos, light_center, up)*/; //lightProj x 카메라 행렬 
 
 	//light matrix
 	shader->setUniform("LightTransform", lightMatrix);
-	shader->setUniform("LightPerspective", lightProjMat);	
 	//Send view matrix to the shader
 	shader->setUniform("model", cam.ProjMat * cam.ViewMat * m2w);
 
-	glm::mat4 w2v = cam.ProjMat * cam.ViewMat;
+	glBindTextureUnit(0, obj->textureID);
 
-	shader->setUniform("WorldToView", w2v);
-
-	if (IsShaderMap)
-		glBindTextureUnit(shadow_map->m_iShadowMapTextureUnit, shadow_map->m_iShadowMapTextureID);
-	else
-		glBindTextureUnit(0, obj->textureID);
-
-	glBindTextureUnit(4, obj->m_iNormalID);
-
-	GLuint unit = IsShaderMap ? shadow_map->m_iShadowMapTextureUnit : 0;
+	glBindTextureUnit(4, obj->m_iNormalID);	
 
 
-	shader->setUniform("myTextureSampler", unit);
+	shader->setUniform("myTextureSampler", 0);
 	shader->setUniform("uNormalMap", 4);
 
 	shader->setUniform("hasTexture", b_tex);

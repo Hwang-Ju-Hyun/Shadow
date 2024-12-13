@@ -4,8 +4,7 @@
 
 ShadowMap::ShadowMap(int _width, int _height)
 	:m_iShadowMapWidth(_width),
-	m_iShadowMapHeight(_height),
-	m_iShadowMapTextureUnit(0)
+	m_iShadowMapHeight(_height)	
 {	
 	glGenFramebuffers(1, &m_iFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_iFBO);
@@ -16,10 +15,10 @@ ShadowMap::ShadowMap(int _width, int _height)
 	glNamedFramebufferTexture(m_iFBO, GL_DEPTH_ATTACHMENT, m_iShadowMapTextureID, 0);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_iShadowMapWidth, m_iShadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -53,9 +52,4 @@ void ShadowMap::Bind()
 void ShadowMap::UnBind()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void ShadowMap::Read()
-{	
-	glBindTextureUnit(m_iShadowMapTextureUnit, m_iShadowMapTextureID);
 }

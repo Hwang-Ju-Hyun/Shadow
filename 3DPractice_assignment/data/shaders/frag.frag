@@ -51,26 +51,28 @@ in vec4 LightSpacePos;
 uniform sampler2D  ShadowMapTexture;
 
 float CalcShadow()
-{	
+{		
+	float bias=0.00001f;
+
 	vec3 projCoords = LightSpacePos.xyz / LightSpacePos.w;
 	projCoords = (projCoords * 0.5) + 0.5; //[-1,1] (NDC) -> [0,1] (Depth) 변환
-
+	
 	//shadow map 텍스처에 저장된 깊이 정보 샘플링
-	float z = texture(ShadowMapTexture, projCoords.xy).r; //깊이 값이 r에 저장되어있음!!!!!!!!!!!
-	float d = projCoords.z; //실제 frag와 light간의 깊이
+	float z = texture(ShadowMapTexture, projCoords.xy).x; 
+	float d = projCoords.z-bias; //실제 frag와 light간의 깊이
 	
 	float IsShadow;
 
 	if(d>z)
-		IsShadow=0.0;
+		IsShadow=1.0;
 	else
-		IsShadow=1.0;	
+		IsShadow=0.0;	
 
 	return IsShadow;
 }
 
 void main()
-{
+{				
 	vec3 Phong=vec3(0.0f,0.0f,0.0f);	
 	//tangent space
 	vec3 normalMap_norm = normalize(2.0*texture(uNormalMap,fragTexCoord).xyz-1.0);
@@ -125,9 +127,9 @@ void main()
 
 			SpotLightEffect=clamp(SpotLightEffect,0,1);
 			
-			float shadow=CalcShadow();
+			//float shadow=CalcShadow();
 
-			Phong += att*(SpotLightEffect*(Diffuse + Specular))*shadow;
+			Phong += att*(SpotLightEffect*(Diffuse + Specular));
 		}
 		else if(uLight[i].type==2)// DIR
 		{
@@ -155,8 +157,8 @@ void main()
 		}			
 		else
 		{
-			//FragColor = vec4(UV,0, 1.0)*vec4(Phong,1.0f);
-			FragColor = vec4(Phong,1.0f);
+			float shadow=CalcShadow();			
+			FragColor = vec4(Phong,1.0f)*(1-shadow);
 		}			
 	}
 }

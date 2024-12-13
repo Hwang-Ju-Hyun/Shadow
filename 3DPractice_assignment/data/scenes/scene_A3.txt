@@ -96,9 +96,9 @@ mesh CUBE
 
 #light data
 light
-translate -40 20 10
+translate -40 20 20
 color 1 1 1
-lightType SPOT	
+lightType SPOT
 attenuation 0 0.0 0.0	
 direction 0.577 -0.577 0.577
 spotAttenuation 10 40 1

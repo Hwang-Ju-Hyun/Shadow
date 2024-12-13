@@ -23,8 +23,6 @@ out vec4 LightSpacePos;
 uniform mat4 LightTransform;
 uniform vec3 LightPerspective;
 uniform mat4 WorldToView;
-out vec3 VL;
-out mat4 TC;
 
 void main()
 {
@@ -45,5 +43,5 @@ void main()
     //goto object space matrix from tangents
     tbnMat = transpose(mat3(Tan, Bin, Nor));//columm major
 
-    LightSpacePos= LightTransform*(inverse(WorldToView) * model * vPosition);
+    LightSpacePos= LightTransform* modeltoworld * vPosition;       
 }
