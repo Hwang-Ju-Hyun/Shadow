@@ -419,6 +419,8 @@ void Level::Render(Model* obj, bool IsShaderMap)
 
 	lightMatrix = cam.ProjMat * V/*glm::lookAt(light_pos, light_center, up)*/; //lightProj x 카메라 행렬 
 
+
+	shader->setUniform("bias", li.bias);
 	//light matrix
 	shader->setUniform("LightTransform", lightMatrix);
 	//Send view matrix to the shader

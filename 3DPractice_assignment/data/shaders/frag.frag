@@ -45,14 +45,14 @@ in vec3 fragWorldPos;
 in mat3 tbnMat;//tanget space로 가는 행렬
 
 uniform mat4 modeltoworld;
+uniform float bias;
 
 in vec3 temp;
 in vec4 LightSpacePos;
 uniform sampler2D  ShadowMapTexture;
 
 float CalcShadow()
-{		
-	float bias=0.001f;
+{			
 
 	vec3 projCoords = LightSpacePos.xyz / LightSpacePos.w;
 	projCoords = (projCoords * 0.5) + 0.5; //[-1,1] (NDC) -> [0,1] (Depth) 변환
@@ -67,6 +67,8 @@ float CalcShadow()
 		IsShadow=1.0;
 	else
 		IsShadow=0.0;	
+
+	
 
 	return IsShadow;
 }

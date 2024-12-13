@@ -160,6 +160,15 @@ void CS300Parser::LoadDataFromFile(const char* filename)
                 objects.back().normalMap = normalMap;
             }
         }
+        else if (id == "bias")
+        {
+            float bias = ReadFloat(inFile);
+
+            if (lights.size() > 0)
+            {
+                lights.back().bias = bias;
+            }
+        }
         else if (id == "shininess")
         {
             float ns = ReadFloat(inFile);

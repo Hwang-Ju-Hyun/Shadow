@@ -51,6 +51,7 @@ class CS300Parser
         glm::vec3 col;//¸ðµç intensity from light
         glm::vec3 att;     //c1,c2,c3
         float amb;
+        float bias;
         float     inner   = 0.0f;
         float     outer   = 30.0f;
         float     falloff = 1.0f;

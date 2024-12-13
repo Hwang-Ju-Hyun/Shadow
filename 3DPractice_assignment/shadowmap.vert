@@ -7,6 +7,5 @@ uniform mat4 model;
 
 void main()
 {
-    gl_Position = model * vPosition;
-    
+    gl_Position = model * vPosition;    
 }
